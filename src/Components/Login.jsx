@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import styled from 'styled-components';
-import { signInAPI } from '../redux/actions';
+import { signInAPI } from '../redux/API';
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
@@ -25,7 +25,7 @@ const Login = () => {
 
   return (
     <Container>
-  
+
       <Nav>
         <a href='/index.html'>
           <img src='/images/login-logo.svg' alt='Logo' />

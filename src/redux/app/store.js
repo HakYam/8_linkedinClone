@@ -1,12 +1,10 @@
 // src/store.js
 import { configureStore } from '@reduxjs/toolkit';
-import {thunk} from 'redux-thunk';
-import userReducer from '../reducers/userSlice';
+import { thunk } from 'redux-thunk';
+import rootReducer from '../reducers';
 
 const store = configureStore({
-  reducer: {
-    userState: userReducer, 
-  },
+  reducer: rootReducer,
   middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(thunk),
 });
 

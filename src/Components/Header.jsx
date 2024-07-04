@@ -1,7 +1,7 @@
 import { signOut } from "firebase/auth";
 import React, { useEffect } from "react";
 import styled from "styled-components";
-import { signOutAPI } from "../redux/actions";
+import { signOutAPI } from "../redux/API";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 
@@ -21,7 +21,7 @@ const Header = ({ user }) => {
         }
     }, [user, navigate])
 
-    
+
 
     return (
         <Container>
