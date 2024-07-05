@@ -107,7 +107,7 @@ const Header = ({ user }) => {
 const Container = styled.div`
   background-color: white;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  
+  margin-left: -6px;
   padding-right: 20px;
   padding-left: 20px;
   position: fixed;
