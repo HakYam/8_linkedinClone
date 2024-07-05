@@ -148,11 +148,11 @@ const Main = ({ user, loading }) => {
                 <li>
                   <button>
                     <img
-                      src="https://static-exp1.licdn.com/sc/h/2uxqgankkcxm505qn812vqyss"
+                      src="/images/like-blue.svg"
                       alt=""
                     />
                     <img
-                      src="https://static-exp1.licdn.com/sc/h/f58e354mjsjpdd67eq51cuh49"
+                      src="/images/love-icon.svg"
                       alt=""
                     />
                     <span>75</span>
