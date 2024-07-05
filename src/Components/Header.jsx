@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 
 const Header = ({ user }) => {
 
-    console.log(user);
+    
     const dispatch = useDispatch();
     const navigate = useNavigate();
 

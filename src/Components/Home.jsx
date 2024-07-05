@@ -5,11 +5,10 @@ import Main from './Main';
 import Rightside from './Rightside';
 import { useSelector } from 'react-redux';
 
-
-
 const Home = () => {
     const user = useSelector((state) => state.userState.user);
-    const loading = useSelector((state) =>state.articlesState.loading)
+    const loading = useSelector((state) =>state.articlesState.loading);
+    const articles = useSelector((state)=>state.articlesState.articles)
 
     return (
         <Container>
@@ -23,7 +22,7 @@ const Home = () => {
             </Section>
             <Layout>
                 <Leftside user={user} />
-                <Main user={user} loading={loading}/>
+                <Main user={user} loading={loading} articles={articles}/>
                 <Rightside />
             </Layout>
         </Container>

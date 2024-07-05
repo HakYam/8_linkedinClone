@@ -32,7 +32,7 @@ const Login = () => {
         </a>
         <NavActions>
           <Join>Join now</Join>
-          <SignIn>Sign in</SignIn>
+          <SignIn onClick={handleSignIn}>Sign in</SignIn>
         </NavActions>
       </Nav>
       <Section>
@@ -42,7 +42,7 @@ const Login = () => {
         </Hero>
         <Form>
           <Google onClick={handleSignIn}>
-            <img src='/images/google.svg' alt='Google' />
+            <img src='/images/google.svg' alt='Google' style={{paddingRight : '5px'}}/>
             Sign in with Google
           </Google>
         </Form>
@@ -99,6 +99,7 @@ const Join = styled.a`
 `;
 
 const SignIn = styled.a`
+cursor: pointer;
   box-shadow: inset 0 0 0 1px #0a66c2;
   color: #0a66c2;
   border-radius: 24px;
@@ -185,6 +186,7 @@ const Form = styled.div`
 `;
 
 const Google = styled.button`
+cursor: pointer;
   display: flex;
   justify-content: center;
   background-color: #fff;

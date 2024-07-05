@@ -13,10 +13,11 @@ const articlesSlice = createSlice ({
     initialState,
     reducers: {
         setLoadingStatus(state, action) {
-            state.loading = action.status;
+            state.loading = action.payload;
         },
         getArticles(state, action) {
             state.articles = action.payload;
+            
         }
     }
 })

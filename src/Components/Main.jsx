@@ -1,42 +1,202 @@
-import React, { useState } from 'react'
-import styled from 'styled-components'
-import PostModal from './PostModal'
-import { useSelector } from 'react-redux'
+import React, { useState, useEffect } from 'react';
+import styled from 'styled-components';
+import PostModal from './PostModal';
+import ReactPlayer from 'react-player';
+import { formatDistanceToNow } from 'date-fns';
+import { db, storage } from '../../firebase';
+import { collection, query, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
+import { deleteObject, ref } from 'firebase/storage';
 
-const Main = ({user, loading}) => {
-    
-    const [showModel, setShowModel] = useState(false)
+const Main = ({ user, loading }) => {
+  const [showModel, setShowModel] = useState(false);
+  const [articles, setArticles] = useState([]);
+  const [loadingArticles, setLoadingArticles] = useState(true);
+  const [menuVisible, setMenuVisible] = useState({});
 
-    const handleClick = () => {
-        setShowModel(!showModel)
+
+  // console.log(user)
+
+  const handleClick = () => {
+    setShowModel(!showModel);
+  };
+
+  const handleDeletePost = async (article) => {
+
+    if (article.actor.uid !== user.uid) {
+      alert('You can only delete your own posts');
+      return;
     }
 
-    return (
-        <Container>
-            <ShareBox>
-                <div>
-                    {user && user.photoURL ? (
-                        <img src={user.photoURL} />
-                    ) : (
-                        <img src='/images/user.svg' />
-                    )}
-                    <button onClick={handleClick} disabled = {loading ? true : false}>
-                        Create a post
-                    </button>
-                </div>
-            </ShareBox>
-            <Content></Content>
+    if (window.confirm('Are you sure you want to delete this post?')) {
+      try {
+        if (article.shareImg) {
+          // Delete the image from storage
+          const imageRef = ref(storage, article.shareImg);
+          await deleteObject(imageRef);
+        }
 
-            <PostModal showModel={showModel} handleClick={handleClick} user={user}/>
-        </Container>
+        // Delete the document from Firestore
+        await deleteDoc(doc(db, 'articles', article.id));
+        alert('Post deleted successfully');
+      } catch (error) {
+        alert('Failed to delete post: ' + error.message);
+      }
+    }
+  };
 
-    )
-}
+  //console.log(articles)
+
+  //show the delete tab
+  const toggleMenu = (id) => {
+    setMenuVisible((prevState) => ({
+      ...prevState,
+      [id]: !prevState[id],
+    }));
+  };
+
+  // Fetching articles from firebase
+  useEffect(() => {
+    const fetchArticles = () => {
+      const collRef = collection(db, 'articles');
+      const orderedRef = query(collRef, orderBy('actor.date', 'desc'));
+      const unsubscribe = onSnapshot(orderedRef, (snapshot) => {
+        const fetchedArticles = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        setArticles(fetchedArticles);
+        setLoadingArticles(false);
+      });
+
+      return unsubscribe; // Clean up the subscription on unmount and cut off db connection
+    };
+
+    fetchArticles();
+  }, []);
+
+  return (
+    <Container>
+      <ShareBox>
+        <div>
+          {user && user.photoURL ? (
+            <img src={user.photoURL} alt="" />
+          ) : (
+            <img src='/images/user.svg' alt="" />
+          )}
+          <button onClick={handleClick} disabled={loading}>
+            Create a post
+          </button>
+        </div>
+        <div>
+          <button onClick={handleClick} disabled={loading}>
+            <img src='/images/photo-icon.svg' alt="" />
+            <span>Photo</span>
+          </button>
+          <button onClick={handleClick} disabled={loading}>
+            <img src='/images/video-icon.svg' alt="" />
+            <span>Video</span>
+          </button>
+          <button onClick={handleClick} disabled={loading}>
+            <img src='/images/event-icon.svg' alt="" />
+            <span>Event</span>
+          </button>
+          <button onClick={handleClick} disabled={loading}>
+            <img src='/images/article-icon.svg' alt="" />
+            <span>Article</span>
+          </button>
+        </div>
+      </ShareBox>
+
+      {loadingArticles ? (
+        <LoadingContainer>
+          <LoadingImage src='/images/loader.svg' alt="Loading..." />
+        </LoadingContainer>
+      ) : articles.length === 0 ? (
+        <p>There are no articles</p>
+      ) : (
+        <Content>
+          {articles.map((article, id) => (
+            <Article key={id}>
+              <SharedActor>
+                <a>
+                  <img src={article.actor.image} alt="" />
+                  <div>
+                    <span>{article.actor.title}</span>
+                    <span>{formatDistanceToNow(new Date(article.actor.date.seconds * 1000), { addSuffix: true })}</span>
+                  </div>
+                </a>
+                <button onClick={() => toggleMenu(article.id)}>
+                  <img src='/images/ellipsis.svg' alt="" />
+                </button>
+                {menuVisible[article.id] && (
+                  <Menu>
+                    <MenuItem onClick={() => handleDeletePost(article)}>Delete</MenuItem>
+                  </Menu>
+                )}
+              </SharedActor>
+              <Description>{article.description}</Description>
+              <SharedImg>
+                <a>
+                  {!article.shareImg && article.video ? (
+                    <ReactPlayer width='100%' url={article.video} />
+                  ) : (
+                    article.shareImg && <img src={article.shareImg} alt="" />
+                  )}
+                </a>
+              </SharedImg>
+              <SocialCounts>
+                <li>
+                  <button>
+                    <img
+                      src="https://static-exp1.licdn.com/sc/h/2uxqgankkcxm505qn812vqyss"
+                      alt=""
+                    />
+                    <img
+                      src="https://static-exp1.licdn.com/sc/h/f58e354mjsjpdd67eq51cuh49"
+                      alt=""
+                    />
+                    <span>75</span>
+                  </button>
+                </li>
+                <li>
+                  <a>{article.comments} comments</a>
+                </li>
+                <li>
+                  <a>1 share</a>
+                </li>
+              </SocialCounts>
+              <SocialActions>
+                <button>
+                  <img src="/images/like-icon.svg" alt="" />
+                  <span>Like</span>
+                </button>
+                <button>
+                  <img src="/images/comment-icon.svg" alt="" />
+                  <span>Comment</span>
+                </button>
+                <button>
+                  <img src="/images/share-icon.svg" alt="" />
+                  <span>Share</span>
+                </button>
+                <button>
+                  <img src="/images/send-icon.svg" alt="" />
+                  <span>Send</span>
+                </button>
+              </SocialActions>
+            </Article>
+          ))}
+        </Content>
+      )}
+
+      <PostModal showModel={showModel} handleClick={handleClick} user={user} />
+    </Container>
+  );
+};
 
 const Container = styled.div`
   grid-area: main;
-  
 `;
+
 const CommonCard = styled.div`
   text-align: center;
   overflow: hidden;
@@ -46,6 +206,7 @@ const CommonCard = styled.div`
   position: relative;
   box-shadow: 0 0 0 1px rgb(0 0 0 / 15%), 0 0 1px rgb(0 0 0 / 20%);
 `;
+
 const ShareBox = styled(CommonCard)`
   display: flex;
   flex-direction: column;
@@ -113,17 +274,33 @@ const ShareBox = styled(CommonCard)`
     }
   }
 `;
+
+const LoadingContainer = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+`;
+
+const LoadingImage = styled.img`
+  width: 60px;
+  height: 60px;
+`;
+
 const Content = styled.div`
   text-align: center;
   & > img {
     width: 70px;
   }
 `;
+
 const Article = styled(CommonCard)`
   padding: 0;
   margin: 0 0 8px;
   overflow: visible;
 `;
+
 const SharedActor = styled.div`
   flex-wrap: nowrap;
   padding: 12px 16px 0;
@@ -165,14 +342,35 @@ const SharedActor = styled.div`
     }
   }
   button {
-    position: absolute;
-    right: 12px;
-    top: 0;
+    position: relative;
     background: transparent;
     border: none;
-    ouline: none;
+    outline: none;
   }
 `;
+
+const Menu = styled.div`
+  position: absolute;
+  top: 20px;
+  right: 0;
+  background: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 5px;
+  z-index: 1;
+`;
+
+const MenuItem = styled.button`
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  &:hover {
+    background: rgba(0, 0, 0, 0.1);
+  }
+`;
+
 const Description = styled.div`
   padding: 0 16px;
   overflow: hidden;
@@ -180,10 +378,11 @@ const Description = styled.div`
   font-size: 14px;
   text-align: left;
 `;
+
 const SharedImg = styled.div`
   margin-top: 8px;
   width: 100%;
-  diplay: block;
+  display: block;
   position: relative;
   background-color: #f9fafb;
   img {
@@ -192,6 +391,7 @@ const SharedImg = styled.div`
     height: 100%;
   }
 `;
+
 const SocialCounts = styled.ul`
   line-height: 1.3;
   display: flex;
@@ -212,6 +412,7 @@ const SocialCounts = styled.ul`
     }
   }
 `;
+
 const SocialActions = styled.div`
   display: flex;
   align-items: center;
@@ -248,4 +449,4 @@ const SocialActions = styled.div`
   }
 `;
 
-export default Main
+export default Main;
