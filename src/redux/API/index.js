@@ -37,67 +37,46 @@ export const signOutAPI = () => {
     }
 }
 
+
 // POST ARTICLE
 export const postArticleAPI = (payload) => {
-    return (dispatch) => {
+    return async (dispatch) => {
         dispatch(setLoadingStatus(true));
 
-        if (payload.image) {
-            // First, compress the image
-            new Compressor(payload.image, {
-                quality: 0.6,
-                success(compressedImage) {
-                    // Generate a unique file name
-                    const fileName = generateFileName(payload.image.name);
-                    const storageRef = ref(storage, fileName);
-                    const uploadTask = uploadBytesResumable(storageRef, compressedImage);
+        try {
+            let shareImg = "";
 
+            if (payload.image) {
+                // Compress the image
+                const compressedImage = await new Promise((resolve, reject) => {
+                    new Compressor(payload.image, {
+                        quality: 0.6,
+                        success: resolve,
+                        error: reject,
+                    });
+                });
+
+                // Generate a unique file name
+                const fileName = generateFileName(payload.image.name);
+                const storageRef = ref(storage, fileName);
+                const uploadTaskSnapshot = await new Promise((resolve, reject) => {
+                    const uploadTask = uploadBytesResumable(storageRef, compressedImage);
                     uploadTask.on('state_changed',
                         (snapshot) => {
                             const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
                             console.log('Uploading is ' + progress + '% done');
                         },
-                        (error) => {
-                            alert(error);
-                            dispatch(setLoadingStatus(false));
-                        },
-                        () => {
-                            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-                                const collRef = collection(db, 'articles');
-                                addDoc(collRef, {
-                                    actor: {
-                                        description: payload.user.email,
-                                        title: payload.user.displayName,
-                                        date: payload.timestamp,
-                                        image: payload.user.photoURL,
-                                        uid: payload.user.uid,
-                                    },
-                                    comments: 0,
-                                    video: payload.video,
-                                    description: payload.description,
-                                    shareImg: downloadURL,
-                                }).then(() => {
-                                    dispatch(setLoadingStatus(false));
-                                }).catch((error) => {
-                                    alert(error);
-                                    dispatch(setLoadingStatus(false));
-                                });
-                            }).catch((error) => {
-                                alert(error);
-                                dispatch(setLoadingStatus(false));
-                            });
-                        }
+                        reject,
+                        () => resolve(uploadTask.snapshot)
                     );
-                },
-                error(err) {
-                    console.log(err.message);
-                    dispatch(setLoadingStatus(false));
-                },
-            });
-        } else {
-            // If the post only contains text or a video link
+                });
+
+                shareImg = await getDownloadURL(uploadTaskSnapshot.ref);
+            }
+
+            // Add the document to Firestore
             const collRef = collection(db, 'articles');
-            addDoc(collRef, {
+            await addDoc(collRef, {
                 actor: {
                     description: payload.user.email,
                     title: payload.user.displayName,
@@ -108,13 +87,13 @@ export const postArticleAPI = (payload) => {
                 comments: 0,
                 video: payload.video,
                 description: payload.description,
-                shareImg: "", // No image to share
-            }).then(() => {
-                dispatch(setLoadingStatus(false));
-            }).catch((error) => {
-                alert(error);
-                dispatch(setLoadingStatus(false));
+                shareImg: shareImg,
             });
+
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            dispatch(setLoadingStatus(false));
         }
     };
 };
@@ -125,4 +104,3 @@ function generateFileName(originalName) {
     const fileExtension = originalName.split('.').pop(); // Extracts the file extension
     return `images/${timestamp}_${originalName}.${fileExtension}`;
 }
-

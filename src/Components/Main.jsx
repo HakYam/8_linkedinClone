@@ -188,7 +188,7 @@ const Main = ({ user, loading }) => {
         </Content>
       )}
 
-      <PostModal showModel={showModel} handleClick={handleClick} user={user} />
+      <PostModal showModel={showModel} handleClick={handleClick} user={user} loading={loading} />
     </Container>
   );
 };

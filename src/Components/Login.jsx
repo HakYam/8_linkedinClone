@@ -151,13 +151,14 @@ const Hero = styled.div`
     width: 55%;
     font-size: 56px;
     color: #2977c9;
-    font-weight: 200;
+    font-weight: 400;
     line-height: 70px;
     @media (max-width: 768px) {
       text-align: center;
       font-size: 22px;
       width: 100%;
       line-height: 1.3;
+      font-weight: 400;
       padding-bottom: 25px;
     }
   }

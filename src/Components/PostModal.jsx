@@ -1,20 +1,20 @@
-
 import React, { useState } from 'react';
 import ReactPlayer from 'react-player';
 import styled from 'styled-components';
-import { Timestamp } from 'firebase/firestore';
 import { postArticleAPI } from '../redux/API';
 import { useDispatch } from 'react-redux';
+import { setLoadingStatus } from '../redux/reducers/articlesSlice';
 
 const PostModal = ({ showModel, handleClick, user }) => {
   const [editorText, setEditorText] = useState('');
   const [assetArea, setAssetArea] = useState('');
   const [shareImage, setShareImage] = useState('');
   const [videoLink, setVideoLink] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const dispatch = useDispatch();
 
-  const reset = (e) => {
+  const reset = () => {
     setEditorText('');
     setShareImage('');
     setVideoLink('');
@@ -38,7 +38,8 @@ const PostModal = ({ showModel, handleClick, user }) => {
     }
   };
 
-  const handlePostArticles = () => {
+  const handlePostArticles = async () => {
+    setIsLoading(true);
     const payload = {
       image: shareImage,
       video: videoLink,
@@ -46,7 +47,8 @@ const PostModal = ({ showModel, handleClick, user }) => {
       description: editorText,
       timestamp: new Date(),
     };
-    dispatch(postArticleAPI(payload));
+    await dispatch(postArticleAPI(payload));
+    setIsLoading(false);
     reset();
   };
 
@@ -57,7 +59,7 @@ const PostModal = ({ showModel, handleClick, user }) => {
           <Content>
             <Header>
               <h2>Create a post</h2>
-              <button onClick={(e) => reset(e)}>
+              <button onClick={reset}>
                 <img src='/images/close-icon.svg' />
               </button>
             </Header>
@@ -77,7 +79,7 @@ const PostModal = ({ showModel, handleClick, user }) => {
                   placeholder='What do you want to talk about?'
                   autoFocus={true}
                 />
-                {assetArea == 'image' ? (
+                {assetArea === 'image' ? (
                   <UploadImage>
                     <input
                       type='file'
@@ -103,7 +105,7 @@ const PostModal = ({ showModel, handleClick, user }) => {
                     )}
                   </UploadImage>
                 ) : (
-                  assetArea == 'media' && (
+                  assetArea === 'media' && (
                     <>
                       <input
                         style={{
@@ -130,8 +132,8 @@ const PostModal = ({ showModel, handleClick, user }) => {
                   <img src='/images/share-video.svg' />
                 </AssetButton>
               </AttachAssets>
-              <PostButton disabled={!editorText} onClick={handlePostArticles}>
-                Post
+              <PostButton disabled={isLoading || !editorText} onClick={handlePostArticles}>
+                {isLoading ? 'Loading...' : 'Post'}
               </PostButton>
             </ShareCreation>
           </Content>
