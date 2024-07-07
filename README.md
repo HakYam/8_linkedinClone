@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project is a LinkedIn Clone built using React and Vite, along with Firebase for backend services. It aims to replicate key functionalities of LinkedIn, providing a professional networking platform where users can connect, share posts.
+This project is a LinkedIn Clone built using **React and Redux**, along with **Firebase** for backend services. It aims to replicate key functionalities of LinkedIn, providing a professional networking platform where users can connect, share posts.
 
 ## Features
 
